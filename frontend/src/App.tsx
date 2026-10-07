@@ -16,6 +16,12 @@ import { DynamicQrAttendance } from './components/DynamicQrAttendance';
 import { OfflineSyncManager } from './components/OfflineSyncManager';
 import { AttendanceExceptions } from './components/AttendanceExceptions';
 
+// Module 3 Components
+import { MultilingualLmsPlayer } from './components/MultilingualLmsPlayer';
+import { BhashiniVoiceConsole } from './components/BhashiniVoiceConsole';
+import { InteractiveAssessmentEngine } from './components/InteractiveAssessmentEngine';
+import { XApiProgressSync } from './components/XApiProgressSync';
+
 // Data Mocking
 import {
   INITIAL_INSTITUTIONS,
@@ -33,12 +39,20 @@ import {
   INITIAL_EXCEPTIONS,
 } from './data/mockAttendanceData';
 
+import {
+  INITIAL_LMS_MODULES,
+  SAMPLE_QUESTION_BANK,
+  INITIAL_ASSESSMENT_ATTEMPTS,
+  INITIAL_XAPI_STATEMENTS,
+} from './data/mockLmsData';
+
 import type { Institution, Course, CandidateNomination, TimetableSession, HostelRoom } from './types/erp';
 import type { AttendanceRecord, AttendanceException } from './types/attendance';
+import type { LmsLessonModule, ScheduledLanguage, AssessmentAttempt, XApiStatement } from './types/lms';
 
 export function App() {
-  const [activeModule, setActiveModule] = useState<ActiveModule>('module2');
-  const [activeTab, setActiveTab] = useState<TabId>('face_kiosk');
+  const [activeModule, setActiveModule] = useState<ActiveModule>('module3');
+  const [activeTab, setActiveTab] = useState<TabId>('multilingual_player');
 
   // Module 1 State
   const [institutions, setInstitutions] = useState<Institution[]>(INITIAL_INSTITUTIONS);
@@ -56,7 +70,13 @@ export function App() {
   const [qrPayload] = useState(INITIAL_QR_PAYLOAD);
   const [exceptions, setExceptions] = useState<AttendanceException[]>(INITIAL_EXCEPTIONS);
 
-  // Handlers
+  // Module 3 State
+  const [lmsModules, setLmsModules] = useState<LmsLessonModule[]>(INITIAL_LMS_MODULES);
+  const [selectedLanguage, setSelectedLanguage] = useState<ScheduledLanguage>('Hindi');
+  const [assessmentAttempts, setAssessmentAttempts] = useState<AssessmentAttempt[]>(INITIAL_ASSESSMENT_ATTEMPTS);
+  const [xapiStatements, setXapiStatements] = useState<XApiStatement[]>(INITIAL_XAPI_STATEMENTS);
+
+  // Module 1 Handlers
   const handleAddInstitution = (inst: Institution) => setInstitutions([inst, ...institutions]);
   const handleAddCourse = (course: Course) => setCourses([course, ...courses]);
   const handleAddNomination = (nom: CandidateNomination) => setNominations([nom, ...nominations]);
@@ -76,24 +96,26 @@ export function App() {
   };
 
   // Module 2 Handlers
-  const handleMarkAttendance = (record: AttendanceRecord) => {
-    setAttendanceLogs([record, ...attendanceLogs]);
-  };
-
-  const handleTriggerSync = () => {
-    setAttendanceLogs(
-      attendanceLogs.map((l) => ({ ...l, syncStatus: 'SYNCED' }))
-    );
-  };
-
-  const handleAddException = (exc: AttendanceException) => {
-    setExceptions([exc, ...exceptions]);
-  };
-
+  const handleMarkAttendance = (record: AttendanceRecord) => setAttendanceLogs([record, ...attendanceLogs]);
+  const handleTriggerSync = () => setAttendanceLogs(attendanceLogs.map((l) => ({ ...l, syncStatus: 'SYNCED' })));
+  const handleAddException = (exc: AttendanceException) => setExceptions([exc, ...exceptions]);
   const handleApproveException = (id: string, approver: string) => {
-    setExceptions(
-      exceptions.map((e) => (e.id === id ? { ...e, status: 'APPROVED', approvedBy: approver } : e))
+    setExceptions(exceptions.map((e) => (e.id === id ? { ...e, status: 'APPROVED', approvedBy: approver } : e)));
+  };
+
+  // Module 3 Handlers
+  const handleDownloadModule = (id: string) => {
+    setLmsModules(
+      lmsModules.map((m) => (m.id === id ? { ...m, isDownloadedOffline: true } : m))
     );
+  };
+
+  const handleCompleteAssessmentAttempt = (attempt: AssessmentAttempt) => {
+    setAssessmentAttempts([attempt, ...assessmentAttempts]);
+  };
+
+  const handleAddXapiStatement = (stmt: XApiStatement) => {
+    setXapiStatements([stmt, ...xapiStatements]);
   };
 
   const conflictCount = timetable.filter((s) => s.hasConflict).length;
@@ -102,6 +124,7 @@ export function App() {
   const hostelOccupancyPercent = totalBeds > 0 ? Math.round((totalOcc / totalBeds) * 100) : 0;
   const bufferedSyncCount = attendanceLogs.filter((l) => l.syncStatus === 'BUFFERED_OFFLINE').length;
   const pendingExceptionsCount = exceptions.filter((e) => e.status === 'PENDING_APPROVAL').length;
+  const downloadedLmsModules = lmsModules.filter((m) => m.isDownloadedOffline).length;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased">
@@ -128,6 +151,8 @@ export function App() {
             hostelOccupancyPercent,
             bufferedSyncCount,
             pendingExceptionsCount,
+            downloadedLmsModules,
+            xapiStatementCount: xapiStatements.length,
           }}
         />
 
@@ -144,9 +169,7 @@ export function App() {
                   onAddInstitution={handleAddInstitution}
                 />
               )}
-              {activeTab === 'catalog' && (
-                <CourseCatalog courses={courses} onAddCourse={handleAddCourse} />
-              )}
+              {activeTab === 'catalog' && <CourseCatalog courses={courses} onAddCourse={handleAddCourse} />}
               {activeTab === 'nominations' && (
                 <BulkNomination
                   nominations={nominations}
@@ -176,28 +199,50 @@ export function App() {
           {activeModule === 'module2' && (
             <>
               {activeTab === 'face_kiosk' && (
-                <FaceVerificationKiosk
-                  templates={faceTemplates}
-                  onMarkAttendance={handleMarkAttendance}
-                />
+                <FaceVerificationKiosk templates={faceTemplates} onMarkAttendance={handleMarkAttendance} />
               )}
               {activeTab === 'dynamic_qr' && (
-                <DynamicQrAttendance
-                  initialPayload={qrPayload}
-                  onMarkAttendance={handleMarkAttendance}
-                />
+                <DynamicQrAttendance initialPayload={qrPayload} onMarkAttendance={handleMarkAttendance} />
               )}
               {activeTab === 'offline_sync' && (
-                <OfflineSyncManager
-                  logs={attendanceLogs}
-                  onTriggerSync={handleTriggerSync}
-                />
+                <OfflineSyncManager logs={attendanceLogs} onTriggerSync={handleTriggerSync} />
               )}
               {activeTab === 'exceptions' && (
                 <AttendanceExceptions
                   exceptions={exceptions}
                   onAddException={handleAddException}
                   onApproveException={handleApproveException}
+                />
+              )}
+            </>
+          )}
+
+          {/* Module 3 Views */}
+          {activeModule === 'module3' && (
+            <>
+              {activeTab === 'multilingual_player' && (
+                <MultilingualLmsPlayer
+                  modules={lmsModules}
+                  selectedLanguage={selectedLanguage}
+                  onDownloadModule={handleDownloadModule}
+                />
+              )}
+              {activeTab === 'bhashini_console' && (
+                <BhashiniVoiceConsole
+                  selectedLanguage={selectedLanguage}
+                  onLanguageChange={setSelectedLanguage}
+                />
+              )}
+              {activeTab === 'interactive_assessment' && (
+                <InteractiveAssessmentEngine
+                  questions={SAMPLE_QUESTION_BANK}
+                  onCompleteAttempt={handleCompleteAssessmentAttempt}
+                />
+              )}
+              {activeTab === 'xapi_sync' && (
+                <XApiProgressSync
+                  statements={xapiStatements}
+                  onAddStatement={handleAddXapiStatement}
                 />
               )}
             </>

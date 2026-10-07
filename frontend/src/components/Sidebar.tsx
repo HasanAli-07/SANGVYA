@@ -9,15 +9,21 @@ import {
   Camera,
   QrCode,
   Database,
-  ShieldAlert
+  ShieldAlert,
+  Globe,
+  Sparkles,
+  Award,
+  FileCode
 } from 'lucide-react';
 
-export type ActiveModule = 'module1' | 'module2';
+export type ActiveModule = 'module1' | 'module2' | 'module3';
 export type TabId = 
   // Module 1
   | 'tenant' | 'catalog' | 'nominations' | 'timetable' | 'hostel'
   // Module 2
-  | 'face_kiosk' | 'dynamic_qr' | 'offline_sync' | 'exceptions';
+  | 'face_kiosk' | 'dynamic_qr' | 'offline_sync' | 'exceptions'
+  // Module 3
+  | 'multilingual_player' | 'bhashini_console' | 'interactive_assessment' | 'xapi_sync';
 
 interface SidebarProps {
   activeModule: ActiveModule;
@@ -31,6 +37,8 @@ interface SidebarProps {
     hostelOccupancyPercent: number;
     bufferedSyncCount: number;
     pendingExceptionsCount: number;
+    downloadedLmsModules: number;
+    xapiStatementCount: number;
   };
 }
 
@@ -56,7 +64,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'exceptions' as TabId, label: 'Attendance Overrides & Audit', section: 'Section 2.4', icon: ShieldAlert, count: stats.pendingExceptionsCount },
   ];
 
-  const currentItems = activeModule === 'module1' ? module1Items : module2Items;
+  const module3Items = [
+    { id: 'multilingual_player' as TabId, label: 'Multilingual SCORM / HTML5 Player', section: 'Section 3.1', icon: Globe, count: stats.downloadedLmsModules },
+    { id: 'bhashini_console' as TabId, label: 'MeitY Bhashini AI Speech & NMT', section: 'Section 3.2', icon: Sparkles, badge: '22 Languages' },
+    { id: 'interactive_assessment' as TabId, label: 'Interactive Assessment & Proctoring', section: 'Section 3.3', icon: Award, badge: '≥75% Pass Mark' },
+    { id: 'xapi_sync' as TabId, label: 'Offline xAPI & Monotonic CRDT Sync', section: 'Section 3.4', icon: FileCode, count: stats.xapiStatementCount },
+  ];
+
+  let currentItems = module1Items;
+  if (activeModule === 'module2') currentItems = module2Items;
+  if (activeModule === 'module3') currentItems = module3Items;
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 p-4 text-slate-300 flex flex-col justify-between min-h-[calc(100vh-4rem)]">
@@ -66,32 +83,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">
             Active Ecosystem Module
           </span>
-          <div className="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[10px]">
             <button
               onClick={() => {
                 onModuleChange('module1');
                 onTabChange('tenant');
               }}
-              className={`py-2 px-2 text-[11px] font-bold rounded-lg transition text-center ${
+              className={`py-2 px-1.5 font-bold rounded-lg transition text-center ${
                 activeModule === 'module1'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Module 1: ERP
+              M1: ERP
             </button>
+
             <button
               onClick={() => {
                 onModuleChange('module2');
                 onTabChange('face_kiosk');
               }}
-              className={`py-2 px-2 text-[11px] font-bold rounded-lg transition text-center ${
+              className={`py-2 px-1.5 font-bold rounded-lg transition text-center ${
                 activeModule === 'module2'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Module 2: Attendance
+              M2: Attend
+            </button>
+
+            <button
+              onClick={() => {
+                onModuleChange('module3');
+                onTabChange('multilingual_player');
+              }}
+              className={`py-2 px-1.5 font-bold rounded-lg transition text-center ${
+                activeModule === 'module3'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              M3: LMS
             </button>
           </div>
         </div>
@@ -101,7 +133,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 px-2">
             <Layers className="w-4 h-4 text-indigo-400" />
             <span>
-              {activeModule === 'module1' ? 'Module 1 Sections' : 'Module 2 Sections'}
+              {activeModule === 'module1' && 'Module 1 Sections'}
+              {activeModule === 'module2' && 'Module 2 Sections'}
+              {activeModule === 'module3' && 'Module 3 Sections'}
             </span>
           </div>
 
@@ -113,14 +147,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => onTabChange(item.id)}
-                  className={`w-full text-left flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                  className={`w-full text-left flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
                     isActive
                       ? 'bg-indigo-600 text-white font-semibold shadow-lg shadow-indigo-600/30'
                       : 'hover:bg-slate-800 text-slate-300 hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center space-x-3 truncate">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-indigo-400'}`} />
+                  <div className="flex items-center space-x-2.5 truncate">
+                    <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-indigo-400'}`} />
                     <div className="truncate">
                       <span className="block truncate">{item.label}</span>
                       <span className={`text-[10px] block ${isActive ? 'text-indigo-200' : 'text-slate-500'}`}>
@@ -144,7 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   )}
 
                   {item.badge && !item.count && !item.alertCount && (
-                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold ${
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${
                       isActive ? 'bg-indigo-700 text-white' : 'bg-slate-800 text-slate-400'
                     }`}>
                       {item.badge}
@@ -160,7 +194,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Footer Info */}
       <div className="text-[11px] text-slate-500 border-t border-slate-800 pt-3">
         <p className="font-semibold text-slate-400">SIH #26087</p>
-        <p>Active Branch: <code className="text-indigo-400">feature/module-2</code></p>
+        <p>Active Branch: <code className="text-indigo-400">feature/module-3</code></p>
       </div>
     </aside>
   );
