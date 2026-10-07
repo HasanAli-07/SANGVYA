@@ -28,6 +28,11 @@ import { DigiLockerGateway } from './components/DigiLockerGateway';
 import { SidhCreditBridge } from './components/SidhCreditBridge';
 import { PublicCertificateVerifier } from './components/PublicCertificateVerifier';
 
+// Module 5 Components
+import { IndicVoiceChatbot } from './components/IndicVoiceChatbot';
+import { RagVectorInspector } from './components/RagVectorInspector';
+import { ChatbotGuardrails } from './components/ChatbotGuardrails';
+
 // Data Mocking
 import {
   INITIAL_INSTITUTIONS,
@@ -58,14 +63,20 @@ import {
   INITIAL_SIDH_ABC_RECORDS,
 } from './data/mockCredentialData';
 
+import {
+  INITIAL_CHAT_MESSAGES,
+  SAMPLE_VECTOR_KNOWLEDGE_BASE,
+} from './data/mockChatbotData';
+
 import type { Institution, Course, CandidateNomination, TimetableSession, HostelRoom } from './types/erp';
 import type { AttendanceRecord, AttendanceException } from './types/attendance';
 import type { LmsLessonModule, ScheduledLanguage, AssessmentAttempt, XApiStatement } from './types/lms';
 import type { VerifiableCredential, DigiLockerCallbackLog, SidhAbcRecord } from './types/credentials';
+import type { ChatMessage, VectorContextChunk } from './types/chatbot';
 
 export function App() {
-  const [activeModule, setActiveModule] = useState<ActiveModule>('module4');
-  const [activeTab, setActiveTab] = useState<TabId>('w3c_compiler');
+  const [activeModule, setActiveModule] = useState<ActiveModule>('module5');
+  const [activeTab, setActiveTab] = useState<TabId>('indic_chatbot');
 
   // Module 1 State
   const [institutions, setInstitutions] = useState<Institution[]>(INITIAL_INSTITUTIONS);
@@ -93,6 +104,10 @@ export function App() {
   const [credentials, setCredentials] = useState<VerifiableCredential[]>(INITIAL_CREDENTIALS);
   const [digilockerLogs, setDigilockerLogs] = useState<DigiLockerCallbackLog[]>(INITIAL_DIGILOCKER_LOGS);
   const [abcRecords, setAbcRecords] = useState<SidhAbcRecord[]>(INITIAL_SIDH_ABC_RECORDS);
+
+  // Module 5 State
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(INITIAL_CHAT_MESSAGES);
+  const [vectorKb] = useState<VectorContextChunk[]>(SAMPLE_VECTOR_KNOWLEDGE_BASE);
 
   // Module 1 Handlers
   const handleAddInstitution = (inst: Institution) => setInstitutions([inst, ...institutions]);
@@ -131,42 +146,29 @@ export function App() {
   const handleAddXapiStatement = (stmt: XApiStatement) => setXapiStatements([stmt, ...xapiStatements]);
 
   // Module 4 Handlers
-  const handleIssueCredential = (vc: VerifiableCredential) => {
-    setCredentials([vc, ...credentials]);
-  };
-
+  const handleIssueCredential = (vc: VerifiableCredential) => setCredentials([vc, ...credentials]);
   const handleTriggerPush = (urn: string) => {
-    const newLog: DigiLockerCallbackLog = {
-      id: `log-${Date.now()}`,
-      endpointType: 'PUSH_URI',
-      citizenUri: 'in.gov.digilocker.user.9921',
-      certificateUrn: urn,
-      httpStatus: 201,
-      responsePayloadSizeKB: 3.8,
-      timestamp: new Date().toISOString(),
-    };
-    setDigilockerLogs([newLog, ...digilockerLogs]);
+    setDigilockerLogs([
+      { id: `log-${Date.now()}`, endpointType: 'PUSH_URI', citizenUri: 'in.gov.digilocker.user.9921', certificateUrn: urn, httpStatus: 201, responsePayloadSizeKB: 3.8, timestamp: new Date().toISOString() },
+      ...digilockerLogs,
+    ]);
   };
-
   const handleTriggerPull = (urn: string) => {
-    const newLog: DigiLockerCallbackLog = {
-      id: `log-${Date.now()}`,
-      endpointType: 'PULL_URI',
-      citizenUri: 'in.gov.digilocker.user.9921',
-      certificateUrn: urn,
-      httpStatus: 200,
-      responsePayloadSizeKB: 15.2,
-      timestamp: new Date().toISOString(),
-    };
-    setDigilockerLogs([newLog, ...digilockerLogs]);
+    setDigilockerLogs([
+      { id: `log-${Date.now()}`, endpointType: 'PULL_URI', citizenUri: 'in.gov.digilocker.user.9921', certificateUrn: urn, httpStatus: 200, responsePayloadSizeKB: 15.2, timestamp: new Date().toISOString() },
+      ...digilockerLogs,
+    ]);
   };
-
   const handleRevokeCertificate = (urn: string) => {
     setCredentials(credentials.map((c) => (c.id === urn ? { ...c, status: 'REVOKED' } : c)));
   };
-
   const handleTriggerAbcSync = () => {
     setAbcRecords(abcRecords.map((r) => ({ ...r, abcSyncStatus: 'SYNCED_TO_ABC' })));
+  };
+
+  // Module 5 Handlers
+  const handleSendMessage = (msg: ChatMessage) => {
+    setChatMessages((prev) => [...prev, msg]);
   };
 
   const conflictCount = timetable.filter((s) => s.hasConflict).length;
@@ -207,6 +209,8 @@ export function App() {
             totalIssuedCredentials: credentials.length,
             digilockerLogCount: digilockerLogs.length,
             abcRecordCount: abcRecords.length,
+            chatMessageCount: chatMessages.length,
+            vectorChunkCount: vectorKb.length,
           }}
         />
 
@@ -303,10 +307,7 @@ export function App() {
           {activeModule === 'module4' && (
             <>
               {activeTab === 'w3c_compiler' && (
-                <VerifiableCredentialCompiler
-                  credentials={credentials}
-                  onIssueCredential={handleIssueCredential}
-                />
+                <VerifiableCredentialCompiler credentials={credentials} onIssueCredential={handleIssueCredential} />
               )}
               {activeTab === 'digilocker_gateway' && (
                 <DigiLockerGateway
@@ -320,8 +321,25 @@ export function App() {
               {activeTab === 'sidh_credit_bridge' && (
                 <SidhCreditBridge records={abcRecords} onTriggerAbcSync={handleTriggerAbcSync} />
               )}
-              {activeTab === 'public_verifier' && (
-                <PublicCertificateVerifier credentials={credentials} />
+              {activeTab === 'public_verifier' && <PublicCertificateVerifier credentials={credentials} />}
+            </>
+          )}
+
+          {/* Module 5 Views */}
+          {activeModule === 'module5' && (
+            <>
+              {activeTab === 'indic_chatbot' && (
+                <IndicVoiceChatbot
+                  messages={chatMessages}
+                  selectedLanguage={selectedLanguage}
+                  onSendMessage={handleSendMessage}
+                />
+              )}
+              {activeTab === 'rag_inspector' && (
+                <RagVectorInspector knowledgeBase={vectorKb} />
+              )}
+              {activeTab === 'guardrails' && (
+                <ChatbotGuardrails />
               )}
             </>
           )}

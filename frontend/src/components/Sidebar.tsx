@@ -15,10 +15,13 @@ import {
   Award,
   FileCode,
   Smartphone,
-  CheckCircle2
+  CheckCircle2,
+  Bot,
+  Search,
+  ShieldCheck
 } from 'lucide-react';
 
-export type ActiveModule = 'module1' | 'module2' | 'module3' | 'module4';
+export type ActiveModule = 'module1' | 'module2' | 'module3' | 'module4' | 'module5';
 export type TabId = 
   // Module 1
   | 'tenant' | 'catalog' | 'nominations' | 'timetable' | 'hostel'
@@ -27,7 +30,9 @@ export type TabId =
   // Module 3
   | 'multilingual_player' | 'bhashini_console' | 'interactive_assessment' | 'xapi_sync'
   // Module 4
-  | 'w3c_compiler' | 'digilocker_gateway' | 'sidh_credit_bridge' | 'public_verifier';
+  | 'w3c_compiler' | 'digilocker_gateway' | 'sidh_credit_bridge' | 'public_verifier'
+  // Module 5
+  | 'indic_chatbot' | 'rag_inspector' | 'guardrails';
 
 interface SidebarProps {
   activeModule: ActiveModule;
@@ -46,6 +51,8 @@ interface SidebarProps {
     totalIssuedCredentials: number;
     digilockerLogCount: number;
     abcRecordCount: number;
+    chatMessageCount: number;
+    vectorChunkCount: number;
   };
 }
 
@@ -85,10 +92,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'public_verifier' as TabId, label: 'Public Decentralized 2D QR Verifier', section: 'Section 4.4', icon: CheckCircle2, badge: 'DID Registry' },
   ];
 
+  const module5Items = [
+    { id: 'indic_chatbot' as TabId, label: 'Indic AI Voice & Text Chatbot', section: 'Sec 5.1/5.3', icon: Bot, count: stats.chatMessageCount },
+    { id: 'rag_inspector' as TabId, label: 'pgvector Grounded RAG Pipeline', section: 'Section 5.2', icon: Search, count: stats.vectorChunkCount },
+    { id: 'guardrails' as TabId, label: 'PII Guardrails & Disclaimers', section: 'Section 5.4', icon: ShieldCheck, badge: 'Zero Hallucination' },
+  ];
+
   let currentItems = module1Items;
   if (activeModule === 'module2') currentItems = module2Items;
   if (activeModule === 'module3') currentItems = module3Items;
   if (activeModule === 'module4') currentItems = module4Items;
+  if (activeModule === 'module5') currentItems = module5Items;
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 p-4 text-slate-300 flex flex-col justify-between min-h-[calc(100vh-4rem)]">
@@ -98,17 +112,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">
             Active Ecosystem Module
           </span>
-          <div className="grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[9px]">
+          <div className="grid grid-cols-5 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[8px]">
             <button
               onClick={() => {
                 onModuleChange('module1');
                 onTabChange('tenant');
               }}
-              className={`py-1.5 px-1 font-bold rounded-lg transition text-center ${
+              className={`py-1.5 px-0.5 font-bold rounded-lg transition text-center ${
                 activeModule === 'module1' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              M1: ERP
+              M1:ERP
             </button>
 
             <button
@@ -116,11 +130,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onModuleChange('module2');
                 onTabChange('face_kiosk');
               }}
-              className={`py-1.5 px-1 font-bold rounded-lg transition text-center ${
+              className={`py-1.5 px-0.5 font-bold rounded-lg transition text-center ${
                 activeModule === 'module2' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              M2: Att
+              M2:Att
             </button>
 
             <button
@@ -128,11 +142,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onModuleChange('module3');
                 onTabChange('multilingual_player');
               }}
-              className={`py-1.5 px-1 font-bold rounded-lg transition text-center ${
+              className={`py-1.5 px-0.5 font-bold rounded-lg transition text-center ${
                 activeModule === 'module3' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              M3: LMS
+              M3:LMS
             </button>
 
             <button
@@ -140,11 +154,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onModuleChange('module4');
                 onTabChange('w3c_compiler');
               }}
-              className={`py-1.5 px-1 font-bold rounded-lg transition text-center ${
+              className={`py-1.5 px-0.5 font-bold rounded-lg transition text-center ${
                 activeModule === 'module4' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              M4: DPI
+              M4:DPI
+            </button>
+
+            <button
+              onClick={() => {
+                onModuleChange('module5');
+                onTabChange('indic_chatbot');
+              }}
+              className={`py-1.5 px-0.5 font-bold rounded-lg transition text-center ${
+                activeModule === 'module5' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              M5:AI
             </button>
           </div>
         </div>
@@ -158,6 +184,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {activeModule === 'module2' && 'Module 2 Sections'}
               {activeModule === 'module3' && 'Module 3 Sections'}
               {activeModule === 'module4' && 'Module 4 Sections'}
+              {activeModule === 'module5' && 'Module 5 Sections'}
             </span>
           </div>
 
@@ -216,7 +243,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Footer Info */}
       <div className="text-[11px] text-slate-500 border-t border-slate-800 pt-3">
         <p className="font-semibold text-slate-400">SIH #26087</p>
-        <p>Active Branch: <code className="text-indigo-400">feature/module-4</code></p>
+        <p>Active Branch: <code className="text-indigo-400">feature/module-5</code></p>
       </div>
     </aside>
   );
