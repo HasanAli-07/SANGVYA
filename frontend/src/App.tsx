@@ -39,6 +39,12 @@ import { SemanticJobMatcher } from './components/SemanticJobMatcher';
 import { TalentDiscoveryPrivacy } from './components/TalentDiscoveryPrivacy';
 import { RecruitmentPipelineNcs } from './components/RecruitmentPipelineNcs';
 
+// Module 7 Components
+import { ExecutiveMisDashboards } from './components/ExecutiveMisDashboards';
+import { DpdpStatutoryCompliance } from './components/DpdpStatutoryCompliance';
+import { CryptographicAuditLedger } from './components/CryptographicAuditLedger';
+import { SystemHealthMonitoring } from './components/SystemHealthMonitoring';
+
 // Data Mocking
 import {
   INITIAL_INSTITUTIONS,
@@ -80,16 +86,33 @@ import {
   INITIAL_NCS_JOBS,
 } from './data/mockRecruitmentData';
 
+import {
+  INITIAL_MIS_KPIS,
+  INITIAL_SKILL_GAP_METRICS,
+  INITIAL_DPDP_CONSENTS,
+  INITIAL_CERTIN_INCIDENTS,
+  INITIAL_AUDIT_BLOCKS,
+  INITIAL_MICROSERVICE_HEALTH,
+} from './data/mockAnalyticsData';
+
 import type { Institution, Course, CandidateNomination, TimetableSession, HostelRoom } from './types/erp';
 import type { AttendanceRecord, AttendanceException } from './types/attendance';
 import type { LmsLessonModule, ScheduledLanguage, AssessmentAttempt, XApiStatement } from './types/lms';
 import type { VerifiableCredential, DigiLockerCallbackLog, SidhAbcRecord } from './types/credentials';
 import type { ChatMessage, VectorContextChunk } from './types/chatbot';
 import type { JobPosting, CandidateTalentProfile, NcsJobImport, PipelineStage } from './types/recruitment';
+import type {
+  MisKpiMetrics,
+  RegionalSkillGapMetric,
+  DpdpConsentRecord,
+  CertInIncidentReport,
+  AuditLedgerBlock,
+  MicroserviceHealth,
+} from './types/analytics';
 
 export function App() {
-  const [activeModule, setActiveModule] = useState<ActiveModule>('module6');
-  const [activeTab, setActiveTab] = useState<TabId>('recruiter_portal');
+  const [activeModule, setActiveModule] = useState<ActiveModule>('module7');
+  const [activeTab, setActiveTab] = useState<TabId>('executive_mis');
 
   // Module 1 State
   const [institutions, setInstitutions] = useState<Institution[]>(INITIAL_INSTITUTIONS);
@@ -126,6 +149,14 @@ export function App() {
   const [jobPostings, setJobPostings] = useState<JobPosting[]>(INITIAL_JOB_POSTINGS);
   const [candidates, setCandidates] = useState<CandidateTalentProfile[]>(INITIAL_CANDIDATE_TALENT);
   const [ncsJobs, setNcsJobs] = useState<NcsJobImport[]>(INITIAL_NCS_JOBS);
+
+  // Module 7 State
+  const [misKpis] = useState<MisKpiMetrics>(INITIAL_MIS_KPIS);
+  const [skillGapMetrics] = useState<RegionalSkillGapMetric[]>(INITIAL_SKILL_GAP_METRICS);
+  const [dpdpConsents, setDpdpConsents] = useState<DpdpConsentRecord[]>(INITIAL_DPDP_CONSENTS);
+  const [certInIncidents, setCertInIncidents] = useState<CertInIncidentReport[]>(INITIAL_CERTIN_INCIDENTS);
+  const [auditBlocks, setAuditBlocks] = useState<AuditLedgerBlock[]>(INITIAL_AUDIT_BLOCKS);
+  const [microserviceHealth] = useState<MicroserviceHealth[]>(INITIAL_MICROSERVICE_HEALTH);
 
   // Module 1 Handlers
   const handleAddInstitution = (inst: Institution) => setInstitutions([inst, ...institutions]);
@@ -209,7 +240,7 @@ export function App() {
     setNcsJobs([
       {
         ncsJobId: `NCS-2026-${Math.floor(100000 + Math.random() * 900000)}`,
-        jobTitle: ' PACS Assistant Manager (Rural Banking)',
+        jobTitle: 'PACS Assistant Manager (Rural Banking)',
         employerName: 'Maharashtra Rural Cooperative Federation',
         location: 'Satara, Maharashtra',
         vacancies: 4,
@@ -217,6 +248,42 @@ export function App() {
       },
       ...ncsJobs,
     ]);
+  };
+
+  // Module 7 Handlers
+  const handleTriggerDpdpPurge = (consentId: string) => {
+    setDpdpConsents(
+      dpdpConsents.map((c) =>
+        c.consentId === consentId
+          ? {
+              ...c,
+              status: 'PURGED_EXPIRED',
+              retentionDaysRemaining: 0,
+              citizenAadhaarHash: '[PURGED_CRYPTOGRAM_ZEROED]',
+              biometricConsentGranted: false,
+              aadhaarConsentGranted: false,
+            }
+          : c
+      )
+    );
+
+    // Append cryptographic audit block
+    const newBlock: AuditLedgerBlock = {
+      blockIndex: auditBlocks.length + 1,
+      timestamp: new Date().toISOString(),
+      actionType: 'CONSENT_PURGE',
+      actorId: 'user-statutory-dpdp-officer',
+      actorRole: 'DPDP Statutory Data Protection Officer',
+      previousHash: auditBlocks[auditBlocks.length - 1]?.blockHash || '00000',
+      blockHash: `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
+      details: `Executed Right to Erasure for Consent ID ${consentId}. Cryptographically purged biometrics and zeroed Aadhaar hash.`,
+      isValid: true,
+    };
+    setAuditBlocks([...auditBlocks, newBlock]);
+  };
+
+  const handleReportCertInIncident = (incident: CertInIncidentReport) => {
+    setCertInIncidents([incident, ...certInIncidents]);
   };
 
   const conflictCount = timetable.filter((s) => s.hasConflict).length;
@@ -261,6 +328,8 @@ export function App() {
             vectorChunkCount: vectorKb.length,
             totalJobPostings: jobPostings.length,
             totalCandidates: candidates.length,
+            activeConsentsCount: dpdpConsents.filter((c) => c.status === 'ACTIVE').length,
+            auditBlockCount: auditBlocks.length,
           }}
         />
 
@@ -422,6 +491,36 @@ export function App() {
                   ncsJobs={ncsJobs}
                   onUpdateStage={handleUpdateCandidateStage}
                   onSyncNcs={handleSyncNcs}
+                />
+              )}
+            </>
+          )}
+
+          {/* Module 7 Views */}
+          {activeModule === 'module7' && (
+            <>
+              {activeTab === 'executive_mis' && (
+                <ExecutiveMisDashboards
+                  kpis={misKpis}
+                  skillGaps={skillGapMetrics}
+                />
+              )}
+              {activeTab === 'dpdp_compliance' && (
+                <DpdpStatutoryCompliance
+                  consents={dpdpConsents}
+                  incidents={certInIncidents}
+                  onTriggerPurge={handleTriggerDpdpPurge}
+                  onReportIncident={handleReportCertInIncident}
+                />
+              )}
+              {activeTab === 'crypto_ledger' && (
+                <CryptographicAuditLedger
+                  blocks={auditBlocks}
+                />
+              )}
+              {activeTab === 'system_health' && (
+                <SystemHealthMonitoring
+                  services={microserviceHealth}
                 />
               )}
             </>

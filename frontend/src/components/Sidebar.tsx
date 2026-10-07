@@ -22,10 +22,12 @@ import {
   Briefcase,
   Zap,
   Lock,
-  ExternalLink
+  ExternalLink,
+  BarChart3,
+  Activity
 } from 'lucide-react';
 
-export type ActiveModule = 'module1' | 'module2' | 'module3' | 'module4' | 'module5' | 'module6';
+export type ActiveModule = 'module1' | 'module2' | 'module3' | 'module4' | 'module5' | 'module6' | 'module7';
 export type TabId = 
   // Module 1
   | 'tenant' | 'catalog' | 'nominations' | 'timetable' | 'hostel'
@@ -38,7 +40,9 @@ export type TabId =
   // Module 5
   | 'indic_chatbot' | 'rag_inspector' | 'guardrails'
   // Module 6
-  | 'recruiter_portal' | 'semantic_matcher' | 'talent_privacy' | 'pipeline_ncs';
+  | 'recruiter_portal' | 'semantic_matcher' | 'talent_privacy' | 'pipeline_ncs'
+  // Module 7
+  | 'executive_mis' | 'dpdp_compliance' | 'crypto_ledger' | 'system_health';
 
 interface SidebarProps {
   activeModule: ActiveModule;
@@ -61,6 +65,8 @@ interface SidebarProps {
     vectorChunkCount: number;
     totalJobPostings: number;
     totalCandidates: number;
+    activeConsentsCount: number;
+    auditBlockCount: number;
   };
 }
 
@@ -113,12 +119,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'pipeline_ncs' as TabId, label: 'Recruitment Pipeline & NCS Bridge', section: 'Section 6.4', icon: ExternalLink, badge: 'Kanban + NCS' },
   ];
 
+  const module7Items = [
+    { id: 'executive_mis' as TabId, label: 'Executive MIS & Apex Reporting', section: 'Section 7.1', icon: BarChart3, badge: '63k PACS KPI' },
+    { id: 'dpdp_compliance' as TabId, label: 'DPDP Statutory & CERT-In Subsystem', section: 'Section 7.2', icon: Lock, count: stats.activeConsentsCount },
+    { id: 'crypto_ledger' as TabId, label: 'Cryptographic Audit Ledger', section: 'Section 7.3', icon: ShieldCheck, count: stats.auditBlockCount },
+    { id: 'system_health' as TabId, label: 'Microservices Health & SLAs', section: 'Section 7.4', icon: Activity, badge: '99.9% Uptime' },
+  ];
+
   let currentItems = module1Items;
   if (activeModule === 'module2') currentItems = module2Items;
   if (activeModule === 'module3') currentItems = module3Items;
   if (activeModule === 'module4') currentItems = module4Items;
   if (activeModule === 'module5') currentItems = module5Items;
   if (activeModule === 'module6') currentItems = module6Items;
+  if (activeModule === 'module7') currentItems = module7Items;
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 p-4 text-slate-300 flex flex-col justify-between min-h-[calc(100vh-4rem)]">
@@ -128,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">
             Active Ecosystem Module
           </span>
-          <div className="grid grid-cols-6 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[8px]">
+          <div className="grid grid-cols-7 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[8px]">
             <button
               onClick={() => {
                 onModuleChange('module1');
@@ -200,6 +214,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               M6
             </button>
+
+            <button
+              onClick={() => {
+                onModuleChange('module7');
+                onTabChange('executive_mis');
+              }}
+              className={`py-1.5 px-0.5 font-bold rounded-lg transition text-center ${
+                activeModule === 'module7' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              M7
+            </button>
           </div>
         </div>
 
@@ -214,6 +240,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {activeModule === 'module4' && 'Module 4 Sections'}
               {activeModule === 'module5' && 'Module 5 Sections'}
               {activeModule === 'module6' && 'Module 6 Sections'}
+              {activeModule === 'module7' && 'Module 7 Sections'}
             </span>
           </div>
 
@@ -272,7 +299,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Footer Info */}
       <div className="text-[11px] text-slate-500 border-t border-slate-800 pt-3">
         <p className="font-semibold text-slate-400">SIH #26087</p>
-        <p>Active Branch: <code className="text-indigo-400">feature/module-6</code></p>
+        <p>Active Branch: <code className="text-indigo-400">feature/module-7</code></p>
       </div>
     </aside>
   );
