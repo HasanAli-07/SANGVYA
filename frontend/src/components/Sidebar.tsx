@@ -13,17 +13,21 @@ import {
   Globe,
   Sparkles,
   Award,
-  FileCode
+  FileCode,
+  Smartphone,
+  CheckCircle2
 } from 'lucide-react';
 
-export type ActiveModule = 'module1' | 'module2' | 'module3';
+export type ActiveModule = 'module1' | 'module2' | 'module3' | 'module4';
 export type TabId = 
   // Module 1
   | 'tenant' | 'catalog' | 'nominations' | 'timetable' | 'hostel'
   // Module 2
   | 'face_kiosk' | 'dynamic_qr' | 'offline_sync' | 'exceptions'
   // Module 3
-  | 'multilingual_player' | 'bhashini_console' | 'interactive_assessment' | 'xapi_sync';
+  | 'multilingual_player' | 'bhashini_console' | 'interactive_assessment' | 'xapi_sync'
+  // Module 4
+  | 'w3c_compiler' | 'digilocker_gateway' | 'sidh_credit_bridge' | 'public_verifier';
 
 interface SidebarProps {
   activeModule: ActiveModule;
@@ -39,6 +43,9 @@ interface SidebarProps {
     pendingExceptionsCount: number;
     downloadedLmsModules: number;
     xapiStatementCount: number;
+    totalIssuedCredentials: number;
+    digilockerLogCount: number;
+    abcRecordCount: number;
   };
 }
 
@@ -71,9 +78,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'xapi_sync' as TabId, label: 'Offline xAPI & Monotonic CRDT Sync', section: 'Section 3.4', icon: FileCode, count: stats.xapiStatementCount },
   ];
 
+  const module4Items = [
+    { id: 'w3c_compiler' as TabId, label: 'W3C VC 2.0 & Cloud HSM Signer', section: 'Section 4.1', icon: Award, count: stats.totalIssuedCredentials },
+    { id: 'digilocker_gateway' as TabId, label: 'DigiLocker & API Setu Issuer Gateway', section: 'Section 4.2', icon: Smartphone, count: stats.digilockerLogCount },
+    { id: 'sidh_credit_bridge' as TabId, label: 'SIDH & Academic Bank of Credits', section: 'Section 4.3', icon: Layers, count: stats.abcRecordCount },
+    { id: 'public_verifier' as TabId, label: 'Public Decentralized 2D QR Verifier', section: 'Section 4.4', icon: CheckCircle2, badge: 'DID Registry' },
+  ];
+
   let currentItems = module1Items;
   if (activeModule === 'module2') currentItems = module2Items;
   if (activeModule === 'module3') currentItems = module3Items;
+  if (activeModule === 'module4') currentItems = module4Items;
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 p-4 text-slate-300 flex flex-col justify-between min-h-[calc(100vh-4rem)]">
@@ -83,16 +98,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">
             Active Ecosystem Module
           </span>
-          <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[10px]">
+          <div className="grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[9px]">
             <button
               onClick={() => {
                 onModuleChange('module1');
                 onTabChange('tenant');
               }}
-              className={`py-2 px-1.5 font-bold rounded-lg transition text-center ${
-                activeModule === 'module1'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+              className={`py-1.5 px-1 font-bold rounded-lg transition text-center ${
+                activeModule === 'module1' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
               M1: ERP
@@ -103,13 +116,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onModuleChange('module2');
                 onTabChange('face_kiosk');
               }}
-              className={`py-2 px-1.5 font-bold rounded-lg transition text-center ${
-                activeModule === 'module2'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+              className={`py-1.5 px-1 font-bold rounded-lg transition text-center ${
+                activeModule === 'module2' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              M2: Attend
+              M2: Att
             </button>
 
             <button
@@ -117,13 +128,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onModuleChange('module3');
                 onTabChange('multilingual_player');
               }}
-              className={`py-2 px-1.5 font-bold rounded-lg transition text-center ${
-                activeModule === 'module3'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+              className={`py-1.5 px-1 font-bold rounded-lg transition text-center ${
+                activeModule === 'module3' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
               M3: LMS
+            </button>
+
+            <button
+              onClick={() => {
+                onModuleChange('module4');
+                onTabChange('w3c_compiler');
+              }}
+              className={`py-1.5 px-1 font-bold rounded-lg transition text-center ${
+                activeModule === 'module4' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              M4: DPI
             </button>
           </div>
         </div>
@@ -136,6 +157,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {activeModule === 'module1' && 'Module 1 Sections'}
               {activeModule === 'module2' && 'Module 2 Sections'}
               {activeModule === 'module3' && 'Module 3 Sections'}
+              {activeModule === 'module4' && 'Module 4 Sections'}
             </span>
           </div>
 
@@ -194,7 +216,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Footer Info */}
       <div className="text-[11px] text-slate-500 border-t border-slate-800 pt-3">
         <p className="font-semibold text-slate-400">SIH #26087</p>
-        <p>Active Branch: <code className="text-indigo-400">feature/module-3</code></p>
+        <p>Active Branch: <code className="text-indigo-400">feature/module-4</code></p>
       </div>
     </aside>
   );

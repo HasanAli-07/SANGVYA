@@ -22,6 +22,12 @@ import { BhashiniVoiceConsole } from './components/BhashiniVoiceConsole';
 import { InteractiveAssessmentEngine } from './components/InteractiveAssessmentEngine';
 import { XApiProgressSync } from './components/XApiProgressSync';
 
+// Module 4 Components
+import { VerifiableCredentialCompiler } from './components/VerifiableCredentialCompiler';
+import { DigiLockerGateway } from './components/DigiLockerGateway';
+import { SidhCreditBridge } from './components/SidhCreditBridge';
+import { PublicCertificateVerifier } from './components/PublicCertificateVerifier';
+
 // Data Mocking
 import {
   INITIAL_INSTITUTIONS,
@@ -46,13 +52,20 @@ import {
   INITIAL_XAPI_STATEMENTS,
 } from './data/mockLmsData';
 
+import {
+  INITIAL_CREDENTIALS,
+  INITIAL_DIGILOCKER_LOGS,
+  INITIAL_SIDH_ABC_RECORDS,
+} from './data/mockCredentialData';
+
 import type { Institution, Course, CandidateNomination, TimetableSession, HostelRoom } from './types/erp';
 import type { AttendanceRecord, AttendanceException } from './types/attendance';
 import type { LmsLessonModule, ScheduledLanguage, AssessmentAttempt, XApiStatement } from './types/lms';
+import type { VerifiableCredential, DigiLockerCallbackLog, SidhAbcRecord } from './types/credentials';
 
 export function App() {
-  const [activeModule, setActiveModule] = useState<ActiveModule>('module3');
-  const [activeTab, setActiveTab] = useState<TabId>('multilingual_player');
+  const [activeModule, setActiveModule] = useState<ActiveModule>('module4');
+  const [activeTab, setActiveTab] = useState<TabId>('w3c_compiler');
 
   // Module 1 State
   const [institutions, setInstitutions] = useState<Institution[]>(INITIAL_INSTITUTIONS);
@@ -75,6 +88,11 @@ export function App() {
   const [selectedLanguage, setSelectedLanguage] = useState<ScheduledLanguage>('Hindi');
   const [assessmentAttempts, setAssessmentAttempts] = useState<AssessmentAttempt[]>(INITIAL_ASSESSMENT_ATTEMPTS);
   const [xapiStatements, setXapiStatements] = useState<XApiStatement[]>(INITIAL_XAPI_STATEMENTS);
+
+  // Module 4 State
+  const [credentials, setCredentials] = useState<VerifiableCredential[]>(INITIAL_CREDENTIALS);
+  const [digilockerLogs, setDigilockerLogs] = useState<DigiLockerCallbackLog[]>(INITIAL_DIGILOCKER_LOGS);
+  const [abcRecords, setAbcRecords] = useState<SidhAbcRecord[]>(INITIAL_SIDH_ABC_RECORDS);
 
   // Module 1 Handlers
   const handleAddInstitution = (inst: Institution) => setInstitutions([inst, ...institutions]);
@@ -105,17 +123,50 @@ export function App() {
 
   // Module 3 Handlers
   const handleDownloadModule = (id: string) => {
-    setLmsModules(
-      lmsModules.map((m) => (m.id === id ? { ...m, isDownloadedOffline: true } : m))
-    );
+    setLmsModules(lmsModules.map((m) => (m.id === id ? { ...m, isDownloadedOffline: true } : m)));
   };
-
   const handleCompleteAssessmentAttempt = (attempt: AssessmentAttempt) => {
     setAssessmentAttempts([attempt, ...assessmentAttempts]);
   };
+  const handleAddXapiStatement = (stmt: XApiStatement) => setXapiStatements([stmt, ...xapiStatements]);
 
-  const handleAddXapiStatement = (stmt: XApiStatement) => {
-    setXapiStatements([stmt, ...xapiStatements]);
+  // Module 4 Handlers
+  const handleIssueCredential = (vc: VerifiableCredential) => {
+    setCredentials([vc, ...credentials]);
+  };
+
+  const handleTriggerPush = (urn: string) => {
+    const newLog: DigiLockerCallbackLog = {
+      id: `log-${Date.now()}`,
+      endpointType: 'PUSH_URI',
+      citizenUri: 'in.gov.digilocker.user.9921',
+      certificateUrn: urn,
+      httpStatus: 201,
+      responsePayloadSizeKB: 3.8,
+      timestamp: new Date().toISOString(),
+    };
+    setDigilockerLogs([newLog, ...digilockerLogs]);
+  };
+
+  const handleTriggerPull = (urn: string) => {
+    const newLog: DigiLockerCallbackLog = {
+      id: `log-${Date.now()}`,
+      endpointType: 'PULL_URI',
+      citizenUri: 'in.gov.digilocker.user.9921',
+      certificateUrn: urn,
+      httpStatus: 200,
+      responsePayloadSizeKB: 15.2,
+      timestamp: new Date().toISOString(),
+    };
+    setDigilockerLogs([newLog, ...digilockerLogs]);
+  };
+
+  const handleRevokeCertificate = (urn: string) => {
+    setCredentials(credentials.map((c) => (c.id === urn ? { ...c, status: 'REVOKED' } : c)));
+  };
+
+  const handleTriggerAbcSync = () => {
+    setAbcRecords(abcRecords.map((r) => ({ ...r, abcSyncStatus: 'SYNCED_TO_ABC' })));
   };
 
   const conflictCount = timetable.filter((s) => s.hasConflict).length;
@@ -153,6 +204,9 @@ export function App() {
             pendingExceptionsCount,
             downloadedLmsModules,
             xapiStatementCount: xapiStatements.length,
+            totalIssuedCredentials: credentials.length,
+            digilockerLogCount: digilockerLogs.length,
+            abcRecordCount: abcRecords.length,
           }}
         />
 
@@ -240,10 +294,34 @@ export function App() {
                 />
               )}
               {activeTab === 'xapi_sync' && (
-                <XApiProgressSync
-                  statements={xapiStatements}
-                  onAddStatement={handleAddXapiStatement}
+                <XApiProgressSync statements={xapiStatements} onAddStatement={handleAddXapiStatement} />
+              )}
+            </>
+          )}
+
+          {/* Module 4 Views */}
+          {activeModule === 'module4' && (
+            <>
+              {activeTab === 'w3c_compiler' && (
+                <VerifiableCredentialCompiler
+                  credentials={credentials}
+                  onIssueCredential={handleIssueCredential}
                 />
+              )}
+              {activeTab === 'digilocker_gateway' && (
+                <DigiLockerGateway
+                  credentials={credentials}
+                  logs={digilockerLogs}
+                  onTriggerPush={handleTriggerPush}
+                  onTriggerPull={handleTriggerPull}
+                  onRevokeCertificate={handleRevokeCertificate}
+                />
+              )}
+              {activeTab === 'sidh_credit_bridge' && (
+                <SidhCreditBridge records={abcRecords} onTriggerAbcSync={handleTriggerAbcSync} />
+              )}
+              {activeTab === 'public_verifier' && (
+                <PublicCertificateVerifier credentials={credentials} />
               )}
             </>
           )}
