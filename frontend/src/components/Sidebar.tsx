@@ -18,10 +18,14 @@ import {
   CheckCircle2,
   Bot,
   Search,
-  ShieldCheck
+  ShieldCheck,
+  Briefcase,
+  Zap,
+  Lock,
+  ExternalLink
 } from 'lucide-react';
 
-export type ActiveModule = 'module1' | 'module2' | 'module3' | 'module4' | 'module5';
+export type ActiveModule = 'module1' | 'module2' | 'module3' | 'module4' | 'module5' | 'module6';
 export type TabId = 
   // Module 1
   | 'tenant' | 'catalog' | 'nominations' | 'timetable' | 'hostel'
@@ -32,7 +36,9 @@ export type TabId =
   // Module 4
   | 'w3c_compiler' | 'digilocker_gateway' | 'sidh_credit_bridge' | 'public_verifier'
   // Module 5
-  | 'indic_chatbot' | 'rag_inspector' | 'guardrails';
+  | 'indic_chatbot' | 'rag_inspector' | 'guardrails'
+  // Module 6
+  | 'recruiter_portal' | 'semantic_matcher' | 'talent_privacy' | 'pipeline_ncs';
 
 interface SidebarProps {
   activeModule: ActiveModule;
@@ -53,6 +59,8 @@ interface SidebarProps {
     abcRecordCount: number;
     chatMessageCount: number;
     vectorChunkCount: number;
+    totalJobPostings: number;
+    totalCandidates: number;
   };
 }
 
@@ -98,11 +106,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'guardrails' as TabId, label: 'PII Guardrails & Disclaimers', section: 'Section 5.4', icon: ShieldCheck, badge: 'Zero Hallucination' },
   ];
 
+  const module6Items = [
+    { id: 'recruiter_portal' as TabId, label: 'Employer Portal & Requisitions', section: 'Section 6.1', icon: Briefcase, count: stats.totalJobPostings },
+    { id: 'semantic_matcher' as TabId, label: 'AI Multi-Factor Job Matcher', section: 'Section 6.2', icon: Zap, badge: 'exp(-λd) Decay' },
+    { id: 'talent_privacy' as TabId, label: 'Privacy Talent Discovery Portal', section: 'Section 6.3', icon: Lock, count: stats.totalCandidates },
+    { id: 'pipeline_ncs' as TabId, label: 'Recruitment Pipeline & NCS Bridge', section: 'Section 6.4', icon: ExternalLink, badge: 'Kanban + NCS' },
+  ];
+
   let currentItems = module1Items;
   if (activeModule === 'module2') currentItems = module2Items;
   if (activeModule === 'module3') currentItems = module3Items;
   if (activeModule === 'module4') currentItems = module4Items;
   if (activeModule === 'module5') currentItems = module5Items;
+  if (activeModule === 'module6') currentItems = module6Items;
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 p-4 text-slate-300 flex flex-col justify-between min-h-[calc(100vh-4rem)]">
@@ -112,7 +128,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">
             Active Ecosystem Module
           </span>
-          <div className="grid grid-cols-5 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[8px]">
+          <div className="grid grid-cols-6 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[8px]">
             <button
               onClick={() => {
                 onModuleChange('module1');
@@ -122,7 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 activeModule === 'module1' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              M1:ERP
+              M1
             </button>
 
             <button
@@ -134,7 +150,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 activeModule === 'module2' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              M2:Att
+              M2
             </button>
 
             <button
@@ -146,7 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 activeModule === 'module3' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              M3:LMS
+              M3
             </button>
 
             <button
@@ -158,7 +174,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 activeModule === 'module4' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              M4:DPI
+              M4
             </button>
 
             <button
@@ -170,7 +186,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 activeModule === 'module5' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              M5:AI
+              M5
+            </button>
+
+            <button
+              onClick={() => {
+                onModuleChange('module6');
+                onTabChange('recruiter_portal');
+              }}
+              className={`py-1.5 px-0.5 font-bold rounded-lg transition text-center ${
+                activeModule === 'module6' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              M6
             </button>
           </div>
         </div>
@@ -185,6 +213,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {activeModule === 'module3' && 'Module 3 Sections'}
               {activeModule === 'module4' && 'Module 4 Sections'}
               {activeModule === 'module5' && 'Module 5 Sections'}
+              {activeModule === 'module6' && 'Module 6 Sections'}
             </span>
           </div>
 
@@ -243,7 +272,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Footer Info */}
       <div className="text-[11px] text-slate-500 border-t border-slate-800 pt-3">
         <p className="font-semibold text-slate-400">SIH #26087</p>
-        <p>Active Branch: <code className="text-indigo-400">feature/module-5</code></p>
+        <p>Active Branch: <code className="text-indigo-400">feature/module-6</code></p>
       </div>
     </aside>
   );
