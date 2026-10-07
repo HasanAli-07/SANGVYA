@@ -33,6 +33,12 @@ import { IndicVoiceChatbot } from './components/IndicVoiceChatbot';
 import { RagVectorInspector } from './components/RagVectorInspector';
 import { ChatbotGuardrails } from './components/ChatbotGuardrails';
 
+// Module 6 Components
+import { RecruiterPortal } from './components/RecruiterPortal';
+import { SemanticJobMatcher } from './components/SemanticJobMatcher';
+import { TalentDiscoveryPrivacy } from './components/TalentDiscoveryPrivacy';
+import { RecruitmentPipelineNcs } from './components/RecruitmentPipelineNcs';
+
 // Data Mocking
 import {
   INITIAL_INSTITUTIONS,
@@ -68,15 +74,22 @@ import {
   SAMPLE_VECTOR_KNOWLEDGE_BASE,
 } from './data/mockChatbotData';
 
+import {
+  INITIAL_JOB_POSTINGS,
+  INITIAL_CANDIDATE_TALENT,
+  INITIAL_NCS_JOBS,
+} from './data/mockRecruitmentData';
+
 import type { Institution, Course, CandidateNomination, TimetableSession, HostelRoom } from './types/erp';
 import type { AttendanceRecord, AttendanceException } from './types/attendance';
 import type { LmsLessonModule, ScheduledLanguage, AssessmentAttempt, XApiStatement } from './types/lms';
 import type { VerifiableCredential, DigiLockerCallbackLog, SidhAbcRecord } from './types/credentials';
 import type { ChatMessage, VectorContextChunk } from './types/chatbot';
+import type { JobPosting, CandidateTalentProfile, NcsJobImport, PipelineStage } from './types/recruitment';
 
 export function App() {
-  const [activeModule, setActiveModule] = useState<ActiveModule>('module5');
-  const [activeTab, setActiveTab] = useState<TabId>('indic_chatbot');
+  const [activeModule, setActiveModule] = useState<ActiveModule>('module6');
+  const [activeTab, setActiveTab] = useState<TabId>('recruiter_portal');
 
   // Module 1 State
   const [institutions, setInstitutions] = useState<Institution[]>(INITIAL_INSTITUTIONS);
@@ -108,6 +121,11 @@ export function App() {
   // Module 5 State
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(INITIAL_CHAT_MESSAGES);
   const [vectorKb] = useState<VectorContextChunk[]>(SAMPLE_VECTOR_KNOWLEDGE_BASE);
+
+  // Module 6 State
+  const [jobPostings, setJobPostings] = useState<JobPosting[]>(INITIAL_JOB_POSTINGS);
+  const [candidates, setCandidates] = useState<CandidateTalentProfile[]>(INITIAL_CANDIDATE_TALENT);
+  const [ncsJobs, setNcsJobs] = useState<NcsJobImport[]>(INITIAL_NCS_JOBS);
 
   // Module 1 Handlers
   const handleAddInstitution = (inst: Institution) => setInstitutions([inst, ...institutions]);
@@ -171,6 +189,36 @@ export function App() {
     setChatMessages((prev) => [...prev, msg]);
   };
 
+  // Module 6 Handlers
+  const handleAddJobPosting = (job: JobPosting) => setJobPostings([job, ...jobPostings]);
+  const handleRevealContactInfo = (candidateId: string) => {
+    setCandidates(
+      candidates.map((c) =>
+        c.candidateId === candidateId ? { ...c, isContactInfoRevealed: true } : c
+      )
+    );
+  };
+  const handleUpdateCandidateStage = (candidateId: string, stage: PipelineStage) => {
+    setCandidates(
+      candidates.map((c) =>
+        c.candidateId === candidateId ? { ...c, currentPipelineStage: stage } : c
+      )
+    );
+  };
+  const handleSyncNcs = () => {
+    setNcsJobs([
+      {
+        ncsJobId: `NCS-2026-${Math.floor(100000 + Math.random() * 900000)}`,
+        jobTitle: ' PACS Assistant Manager (Rural Banking)',
+        employerName: 'Maharashtra Rural Cooperative Federation',
+        location: 'Satara, Maharashtra',
+        vacancies: 4,
+        syncedAt: new Date().toISOString(),
+      },
+      ...ncsJobs,
+    ]);
+  };
+
   const conflictCount = timetable.filter((s) => s.hasConflict).length;
   const totalBeds = rooms.reduce((acc, r) => acc + r.capacity, 0);
   const totalOcc = rooms.reduce((acc, r) => acc + r.occupied, 0);
@@ -211,6 +259,8 @@ export function App() {
             abcRecordCount: abcRecords.length,
             chatMessageCount: chatMessages.length,
             vectorChunkCount: vectorKb.length,
+            totalJobPostings: jobPostings.length,
+            totalCandidates: candidates.length,
           }}
         />
 
@@ -340,6 +390,39 @@ export function App() {
               )}
               {activeTab === 'guardrails' && (
                 <ChatbotGuardrails />
+              )}
+            </>
+          )}
+
+          {/* Module 6 Views */}
+          {activeModule === 'module6' && (
+            <>
+              {activeTab === 'recruiter_portal' && (
+                <RecruiterPortal
+                  jobPostings={jobPostings}
+                  courses={courses}
+                  onAddJobPosting={handleAddJobPosting}
+                />
+              )}
+              {activeTab === 'semantic_matcher' && (
+                <SemanticJobMatcher
+                  jobPostings={jobPostings}
+                  candidates={candidates}
+                />
+              )}
+              {activeTab === 'talent_privacy' && (
+                <TalentDiscoveryPrivacy
+                  candidates={candidates}
+                  onRevealContactInfo={handleRevealContactInfo}
+                />
+              )}
+              {activeTab === 'pipeline_ncs' && (
+                <RecruitmentPipelineNcs
+                  candidates={candidates}
+                  ncsJobs={ncsJobs}
+                  onUpdateStage={handleUpdateCandidateStage}
+                  onSyncNcs={handleSyncNcs}
+                />
               )}
             </>
           )}
