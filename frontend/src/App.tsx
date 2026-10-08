@@ -3,6 +3,11 @@ import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import type { ActiveModule, TabId } from './components/Sidebar';
 
+// UI/UX Design System Components
+import { SahkarVaniFloatingAssistant } from './components/SahkarVaniFloatingAssistant';
+import { CelebratoryCompletionModal } from './components/CelebratoryCompletionModal';
+import { MobileBottomNav } from './components/MobileBottomNav';
+
 // Module 1 Components
 import { TenantManagement } from './components/TenantManagement';
 import { CourseCatalog } from './components/CourseCatalog';
@@ -111,8 +116,13 @@ import type {
 } from './types/analytics';
 
 export function App() {
-  const [activeModule, setActiveModule] = useState<ActiveModule>('module7');
-  const [activeTab, setActiveTab] = useState<TabId>('executive_mis');
+  const [activeModule, setActiveModule] = useState<ActiveModule>('module1');
+  const [activeTab, setActiveTab] = useState<TabId>('tenant');
+
+  // UI/UX Adaptability & Ergonomic Settings
+  const [deviceView, setDeviceView] = useState<'web' | 'tablet' | 'mobile'>('web');
+  const [fontScale, setFontScale] = useState<100 | 115 | 130>(100);
+  const [isCelebrationModalOpen, setIsCelebrationModalOpen] = useState(false);
 
   // Module 1 State
   const [institutions, setInstitutions] = useState<Institution[]>(INITIAL_INSTITUTIONS);
@@ -191,6 +201,9 @@ export function App() {
   };
   const handleCompleteAssessmentAttempt = (attempt: AssessmentAttempt) => {
     setAssessmentAttempts([attempt, ...assessmentAttempts]);
+    if (attempt.scorePercent >= 75) {
+      setIsCelebrationModalOpen(true);
+    }
   };
   const handleAddXapiStatement = (stmt: XApiStatement) => setXapiStatements([stmt, ...xapiStatements]);
 
@@ -267,7 +280,6 @@ export function App() {
       )
     );
 
-    // Append cryptographic audit block
     const newBlock: AuditLedgerBlock = {
       blockIndex: auditBlocks.length + 1,
       timestamp: new Date().toISOString(),
@@ -294,47 +306,68 @@ export function App() {
   const pendingExceptionsCount = exceptions.filter((e) => e.status === 'PENDING_APPROVAL').length;
   const downloadedLmsModules = lmsModules.filter((m) => m.isDownloadedOffline).length;
 
+  // Viewport Container Dimensions based on Device Simulation Toggle
+  const deviceContainerClass =
+    deviceView === 'mobile'
+      ? 'max-w-[412px] mx-auto border-x-4 border-slate-800 rounded-3xl overflow-hidden shadow-2xl my-4'
+      : deviceView === 'tablet'
+      ? 'max-w-[834px] mx-auto border-x-4 border-slate-800 rounded-3xl overflow-hidden shadow-2xl my-4'
+      : 'w-full';
+
+  // Typography scaling style
+  const fontScaleStyle =
+    fontScale === 115 ? { fontSize: '115%' } : fontScale === 130 ? { fontSize: '130%' } : {};
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased">
-      {/* Navbar */}
+    <div
+      style={fontScaleStyle}
+      className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased transition-all duration-200"
+    >
+      {/* Top Navbar */}
       <Navbar
         institutions={institutions}
         selectedInstitution={selectedInstitution}
         onSelectInstitution={setSelectedInstitution}
         activeRole={activeRole}
         onSelectRole={setActiveRole}
+        deviceView={deviceView}
+        onChangeDeviceView={setDeviceView}
+        fontScale={fontScale}
+        onChangeFontScale={setFontScale}
       />
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
-        <Sidebar
-          activeModule={activeModule}
-          onModuleChange={setActiveModule}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          stats={{
-            totalCourses: courses.length,
-            totalNominations: nominations.length,
-            conflictCount,
-            hostelOccupancyPercent,
-            bufferedSyncCount,
-            pendingExceptionsCount,
-            downloadedLmsModules,
-            xapiStatementCount: xapiStatements.length,
-            totalIssuedCredentials: credentials.length,
-            digilockerLogCount: digilockerLogs.length,
-            abcRecordCount: abcRecords.length,
-            chatMessageCount: chatMessages.length,
-            vectorChunkCount: vectorKb.length,
-            totalJobPostings: jobPostings.length,
-            totalCandidates: candidates.length,
-            activeConsentsCount: dpdpConsents.filter((c) => c.status === 'ACTIVE').length,
-            auditBlockCount: auditBlocks.length,
-          }}
-        />
+      <div className={`flex-1 flex overflow-hidden ${deviceContainerClass}`}>
+        {/* Desktop & Tablet Sidebar (Hidden in Mobile View) */}
+        {deviceView !== 'mobile' && (
+          <Sidebar
+            activeModule={activeModule}
+            onModuleChange={setActiveModule}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            stats={{
+              totalCourses: courses.length,
+              totalNominations: nominations.length,
+              conflictCount,
+              hostelOccupancyPercent,
+              bufferedSyncCount,
+              pendingExceptionsCount,
+              downloadedLmsModules,
+              xapiStatementCount: xapiStatements.length,
+              totalIssuedCredentials: credentials.length,
+              digilockerLogCount: digilockerLogs.length,
+              abcRecordCount: abcRecords.length,
+              chatMessageCount: chatMessages.length,
+              vectorChunkCount: vectorKb.length,
+              totalJobPostings: jobPostings.length,
+              totalCandidates: candidates.length,
+              activeConsentsCount: dpdpConsents.filter((c) => c.status === 'ACTIVE').length,
+              auditBlockCount: auditBlocks.length,
+            }}
+          />
+        )}
 
-        {/* Main Workspace */}
-        <main className="flex-1 p-6 overflow-y-auto max-w-7xl mx-auto w-full">
+        {/* Main Workspace Area */}
+        <main className="flex-1 p-4 sm:p-6 overflow-y-auto max-w-7xl mx-auto w-full pb-20 md:pb-6">
           {/* Module 1 Views */}
           {activeModule === 'module1' && (
             <>
@@ -527,6 +560,35 @@ export function App() {
           )}
         </main>
       </div>
+
+      {/* Floating Indic Voice Assistant (Sahkar Vani) */}
+      <SahkarVaniFloatingAssistant
+        selectedLanguage={selectedLanguage}
+        onNavigateTab={(t) => setActiveTab(t as TabId)}
+      />
+
+      {/* Mobile Bottom Touch Navigation Bar */}
+      <MobileBottomNav
+        activeModule={activeModule}
+        onModuleChange={(m) => {
+          setActiveModule(m);
+          if (m === 'module1') setActiveTab('tenant');
+          if (m === 'module2') setActiveTab('face_kiosk');
+          if (m === 'module3') setActiveTab('multilingual_player');
+          if (m === 'module4') setActiveTab('w3c_compiler');
+          if (m === 'module5') setActiveTab('indic_chatbot');
+          if (m === 'module6') setActiveTab('recruiter_portal');
+          if (m === 'module7') setActiveTab('executive_mis');
+        }}
+        onOpenVoiceAssistant={() => {}}
+        onOpenCelebrationModal={() => setIsCelebrationModalOpen(true)}
+      />
+
+      {/* Celebration & DigiLocker Export Modal */}
+      <CelebratoryCompletionModal
+        isOpen={isCelebrationModalOpen}
+        onClose={() => setIsCelebrationModalOpen(false)}
+      />
     </div>
   );
 }
