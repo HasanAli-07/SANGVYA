@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { AuthScreen } from './components/auth/AuthScreen';
-import { Role1Sidebar, Role1TabId } from './components/role1_admin/Role1Sidebar';
+import { Role1Sidebar, type Role1TabId } from './components/role1_admin/Role1Sidebar';
 import { ApexGovernanceOverview } from './components/role1_admin/ApexGovernanceOverview';
 import { MasterCourseAccreditation } from './components/role1_admin/MasterCourseAccreditation';
 import { NationalPacsMisReporting } from './components/role1_admin/NationalPacsMisReporting';
@@ -16,9 +16,6 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import {
   INITIAL_INSTITUTIONS,
   INITIAL_COURSES,
-  INITIAL_NOMINATIONS,
-  INITIAL_TIMETABLE,
-  INITIAL_HOSTEL_ROOMS,
 } from './data/mockErpData';
 
 import {
